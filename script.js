@@ -32,31 +32,40 @@ fetchJson('https://api.quran.com/api/v4/chapters')
     setListStatus('Gagal memuat daftar surah. Coba refresh halaman.', true);
   });
 
-// Create share modal once
-createShareModal();
+// Create share modal after DOM is ready
+document.addEventListener('DOMContentLoaded', function() {
+  createShareModal();
+});
 
 function createShareModal() {
-  if (!document.getElementById('shareModal')) {
-    const modal = document.createElement('div');
-    modal.id = 'shareModal';
-    modal.className = 'share-modal';
-    modal.innerHTML = `
-      <div class="share-panel">
-        <h3>Bagikan Ayat</h3>
-        <canvas id="shareCanvas" class="share-image-canvas" width="1080" height="1080"></canvas>
-        <div id="shareLoading" class="share-loading loading-spinner">
+  // Hapus modal yang sudah ada jika ada
+  var existingModal = document.getElementById('shareModal');
+  if (existingModal) {
+    existingModal.remove();
+  }
+  
+  const modal = document.createElement('div');
+  modal.id = 'shareModal';
+  modal.className = 'share-modal';
+  modal.style.display = 'none';
+  modal.innerHTML = `
+    <div class="share-panel">
+      <h3>Bagikan Ayat</h3>
+      <div style="position: relative; margin: 20px 0;">
+        <canvas id="shareCanvas" class="share-image-canvas" width="1080" height="1080" style="max-width: 100%; height: auto; border-radius: 12px;"></canvas>
+        <div id="shareLoading" class="share-loading" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.8); color: white; padding: 20px; border-radius: 12px; display: none;">
           <div class="spinner"></div>
           <div class="loading-text">Membuat gambar...</div>
         </div>
-        <div class="share-buttons">
-          <button class="primary" onclick="downloadShareImage()">📥 Download PNG</button>
-          <button class="secondary" onclick="shareNative()">📱 Share</button>
-          <button class="secondary" onclick="closeShareModal()">Tutup</button>
-        </div>
       </div>
-    `;
-    document.body.appendChild(modal);
-  }
+      <div class="share-buttons" style="display: flex; gap: 10px; justify-content: center;">
+        <button class="primary" onclick="downloadShareImage()">📥 Download PNG</button>
+        <button class="secondary" onclick="shareNative()">📱 Share</button>
+        <button class="secondary" onclick="closeShareModal()">Tutup</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
 }
 
 // =========================
@@ -125,36 +134,60 @@ function formatRevelation(value) {
 }
 
 // =========================
-// Share Functions
+// Share Functions - IMPROVED
 // =========================
 function shareAyat(ayatIndex) {
+  console.log('Share ayat clicked:', ayatIndex);
+  
   const ayatEl = document.getElementById('ayat-' + ayatIndex);
-  if (!ayatEl) return;
+  if (!ayatEl) {
+    console.error('Ayat element not found');
+    return;
+  }
 
-  const arab = ayatEl.querySelector('.arab').textContent.trim();
-  const arti = ayatEl.querySelector('.arti').textContent.trim();
+  const arab = ayatEl.querySelector('.arab');
+  const arti = ayatEl.querySelector('.arti');
+  
+  if (!arab || !arti) {
+    console.error('Arab or arti element not found');
+    return;
+  }
 
   currentShareData = {
-    arab,
-    arti,
+    arab: arab.textContent.trim(),
+    arti: arti.textContent.trim(),
     surah: currentSurahName,
     ayat: ayatIndex + 1
   };
 
+  console.log('Share data:', currentShareData);
   openShareModal();
 }
 
 function openShareModal() {
   const modal = document.getElementById('shareModal');
-  if (modal) {
-    modal.classList.add('open');
-    generateImage();
+  if (!modal) {
+    console.error('Modal not found, creating new one');
+    createShareModal();
+    setTimeout(() => openShareModal(), 100);
+    return;
   }
+  
+  modal.style.display = 'flex';
+  modal.classList.add('open');
+  
+  // Generate image with a small delay to ensure modal is visible
+  setTimeout(() => {
+    generateImage();
+  }, 100);
 }
 
 function closeShareModal() {
   const modal = document.getElementById('shareModal');
-  if (modal) modal.classList.remove('open');
+  if (modal) {
+    modal.style.display = 'none';
+    modal.classList.remove('open');
+  }
   currentShareData = null;
 }
 
@@ -213,7 +246,6 @@ function drawWrappedLines(ctx, lines, x, y, color, align, fontSize, lineRatio, f
   ctx.textBaseline = 'top';
   ctx.fillStyle = color;
   
-  // Fix: handle empty weight properly
   if (weight) {
     ctx.font = `${weight} ${fontSize}px ${fontFamily}`;
   } else {
@@ -253,9 +285,11 @@ function fitFontSize(ctx, text, maxWidth, maxLines, maxHeight, minSize, maxSize,
 }
 
 // =========================
-// IMAGE GENERATION
+// IMAGE GENERATION - IMPROVED
 // =========================
 function generateImage() {
+  console.log('Generating image...');
+  
   try {
     const canvas = document.getElementById('shareCanvas');
     if (!canvas) {
@@ -270,13 +304,25 @@ function generateImage() {
     }
 
     const loading = document.getElementById('shareLoading');
-    if (loading) loading.classList.add('open');
+    if (loading) {
+      loading.style.display = 'flex';
+    }
+
+    if (!currentShareData) {
+      console.error('No share data available');
+      if (loading) loading.style.display = 'none';
+      return;
+    }
 
     const WIDTH = 1080;
     const HEIGHT = 1080;
     const PAD = 80;
     const CONTENT_W = WIDTH - 2 * PAD;
 
+    // Set canvas dimensions
+    canvas.width = WIDTH;
+    canvas.height = HEIGHT;
+    
     ctx.clearRect(0, 0, WIDTH, HEIGHT);
 
     // 🎨 Background
@@ -341,7 +387,7 @@ function generateImage() {
       'Georgia'
     );
 
-    // Glow biar keren 😎
+    // Glow effect
     ctx.shadowColor = 'rgba(232, 199, 122, 0.25)';
     ctx.shadowBlur = 20;
 
@@ -410,22 +456,39 @@ function generateImage() {
     ctx.fillText('Qur\'an App by Hamba Allah', WIDTH - PAD, HEIGHT - PAD);
     ctx.restore();
 
-    if (loading) loading.classList.remove('open');
+    console.log('Image generated successfully');
+    
+    if (loading) {
+      loading.style.display = 'none';
+    }
+    
   } catch (error) {
     console.error('Error generating image:', error);
     const loading = document.getElementById('shareLoading');
-    if (loading) loading.classList.remove('open');
+    if (loading) {
+      loading.style.display = 'none';
+    }
+    alert('Gagal membuat gambar: ' + error.message);
   }
 }
 
 function downloadShareImage() {
   const canvas = document.getElementById('shareCanvas');
-  if (!canvas) return;
+  if (!canvas) {
+    console.error('Canvas not found');
+    return;
+  }
   
-  const link = document.createElement('a');
-  link.download = `ayat-${currentShareData.surah}-${currentShareData.ayat}.png`;
-  link.href = canvas.toDataURL('image/png');
-  link.click();
+  try {
+    const link = document.createElement('a');
+    link.download = `ayat-${currentShareData.surah}-${currentShareData.ayat}.png`;
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+    console.log('Image downloaded');
+  } catch (error) {
+    console.error('Error downloading image:', error);
+    alert('Gagal download gambar');
+  }
 }
 
 function shareNative() {
@@ -438,7 +501,10 @@ function shareNative() {
         title: `${currentShareData.surah} Ayat ${currentShareData.ayat}`,
         text: currentShareData.arti.substring(0, 100) + '...',
         files: [file]
-      }).catch(console.error);
+      }).catch(err => {
+        console.error('Share failed:', err);
+        downloadShareImage();
+      });
     });
   } else {
     downloadShareImage();
