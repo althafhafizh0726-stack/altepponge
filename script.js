@@ -822,3 +822,8 @@ updatePlayerUI();
 
 loop();
 }
+<script>
+function closePopup() {
+  document.getElementById("popup").style.display = "none";
+}
+</script>
