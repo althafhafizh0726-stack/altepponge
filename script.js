@@ -89,20 +89,15 @@ function shareAyat(ayatIndex) {
   const ayatEl = document.getElementById('ayat-' + ayatIndex);
 
   if (!ayatEl) {
-    console.error('Ayat tidak ditemukan');
+    console.error('Ayat tidak ketemu');
     return;
   }
 
   const arabEl = ayatEl.querySelector('.arab');
   const artiEl = ayatEl.querySelector('.arti');
 
-  if (!arabEl || !artiEl) {
-    console.error('Konten ayat tidak lengkap');
-    return;
-  }
-
-  const arab = arabEl.textContent.trim();
-  const arti = artiEl.textContent.trim();
+  const arab = arabEl ? arabEl.innerText : '';
+  const arti = artiEl ? artiEl.innerText : '';
 
   currentShareData = {
     arab,
@@ -110,6 +105,8 @@ function shareAyat(ayatIndex) {
     surah: currentSurahName || 'Al-Qur\'an',
     ayat: ayatIndex + 1
   };
+
+  console.log('DATA:', currentShareData);
 
   openShareModal();
 }
