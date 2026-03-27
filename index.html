@@ -46,11 +46,15 @@
     <section id="detail" aria-live="polite"></section>
   </div>
 </main>
-  <div class="overlay">
-  <div class="popup">
-    <h1>🚧 Website Dalam Perbaikan</h1>
-    <p>Maaf, website ini sedang dalam tahap pengembangan (beta).</p>
-    <p>Silakan kembali lagi nanti ya!</p>
+ <div class="overlay" id="popup">
+  <div class="popup-box">
+    <button class="close-btn" onclick="closePopup()">✕</button>
+    
+    <h1>Beta Website</h1>
+    <p>Website ini masih dalam tahap pengembangan.</p>
+    <p>Beberapa fitur mungkin belum berjalan dengan sempurna.</p>
+
+    <button class="btn" onclick="closePopup()">Masuk Aja</button>
   </div>
 </div>
 <script src="script.js"></script>
