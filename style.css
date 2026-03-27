@@ -1007,6 +1007,10 @@ button:disabled{
   margin-bottom: 10px;
 }
 
+h2{
+  color:red;
+}
+
 .popup-box p {
   color: #666;
   font-size: 14px;
