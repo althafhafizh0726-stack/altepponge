@@ -891,27 +891,84 @@ button:disabled{
     align-items:flex-start;
   }
 
-  .overlay {
+}
+
+.overlay {
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0,0,0,0.7);
+  background: rgba(0,0,0,0.75);
   display: flex;
   justify-content: center;
   align-items: center;
   z-index: 9999;
 }
 
-.popup {
-  background: white;
-  padding: 30px 40px;
-  border-radius: 12px;
+.popup-box {
+  background: #fff;
+  padding: 30px;
+  border-radius: 16px;
   text-align: center;
   max-width: 400px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+  width: 90%;
+  position: relative;
+  animation: fadeIn 0.4s ease;
+  box-shadow: 0 15px 40px rgba(0,0,0,0.3);
 }
+
+.popup-box h1 {
+  margin-bottom: 10px;
+  font-size: 24px;
+}
+
+.popup-box p {
+  color: #555;
+  margin-bottom: 8px;
+}
+
+.close-btn {
+  position: absolute;
+  top: 12px;
+  right: 15px;
+  border: none;
+  background: transparent;
+  font-size: 20px;
+  cursor: pointer;
+  color: #999;
+  transition: 0.2s;
+}
+
+.close-btn:hover {
+  color: #000;
+  transform: scale(1.2);
+}
+
+.btn {
+  margin-top: 15px;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 8px;
+  background: #4da3ff;
+  color: white;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.btn:hover {
+  background: #1f6fd1;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 
