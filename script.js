@@ -79,32 +79,76 @@ textarea.innerHTML=text;
 return textarea.value;
 }
 
-// Share Ayat Blackbox
+// =========================
+// SHARE AYAT (FIXED)
+// =========================
+
 let currentShareData = null;
 
 function shareAyat(ayatIndex) {
   const ayatEl = document.getElementById('ayat-' + ayatIndex);
-  if (!ayatEl) return;
-  
-  const arab = ayatEl.querySelector('.arab').textContent.trim();
-  const arti = ayatEl.querySelector('.arti').textContent.trim();
-  
+
+  if (!ayatEl) {
+    console.error('Ayat tidak ditemukan');
+    return;
+  }
+
+  const arabEl = ayatEl.querySelector('.arab');
+  const artiEl = ayatEl.querySelector('.arti');
+
+  if (!arabEl || !artiEl) {
+    console.error('Konten ayat tidak lengkap');
+    return;
+  }
+
+  const arab = arabEl.textContent.trim();
+  const arti = artiEl.textContent.trim();
+
   currentShareData = {
     arab,
     arti,
-    surah: currentSurahName,
+    surah: currentSurahName || 'Al-Qur\'an',
     ayat: ayatIndex + 1
   };
-  
+
   openShareModal();
 }
 
 function openShareModal() {
-  const modal = document.getElementById('shareModal');
-  if (modal) {
-    modal.classList.add('open');
-    generateImage();
+  let modal = document.getElementById('shareModal');
+
+  // kalau belum ada → bikin
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'shareModal';
+    modal.className = 'share-modal';
+
+    modal.innerHTML = `
+      <div class="share-panel">
+        <h3>Bagikan Ayat</h3>
+        <canvas id="shareCanvas" width="1080" height="1080"></canvas>
+
+        <div id="shareLoading" class="share-loading">
+          Membuat gambar...
+        </div>
+
+        <div class="share-buttons">
+          <button onclick="downloadShareImage()">Download</button>
+          <button onclick="shareNative()">Share</button>
+          <button onclick="closeShareModal()">Tutup</button>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(modal);
   }
+
+  modal.classList.add('open');
+
+  // kasih delay biar canvas siap
+  setTimeout(() => {
+    generateImage();
+  }, 100);
 }
 
 function closeShareModal() {
@@ -114,264 +158,101 @@ function closeShareModal() {
 }
 
 function generateImage() {
+  if (!currentShareData) return;
+
   const canvas = document.getElementById('shareCanvas');
+  if (!canvas) {
+    console.error('Canvas tidak ditemukan');
+    return;
+  }
+
   const ctx = canvas.getContext('2d');
   const loading = document.getElementById('shareLoading');
-  
-  loading.classList.add('open');
-  
+  if (loading) loading.style.display = 'block';
+
   const WIDTH = 1080;
   const HEIGHT = 1080;
   const PAD = 80;
   const CONTENT_W = WIDTH - 2 * PAD;
-  
+
   ctx.clearRect(0, 0, WIDTH, HEIGHT);
-  
-  // 🎨 Background
+
+  // BACKGROUND
   const gradient = ctx.createLinearGradient(0, 0, WIDTH, HEIGHT);
   gradient.addColorStop(0, '#08110f');
-  gradient.addColorStop(0.5, '#10201d');
-  gradient.addColorStop(1, '#07100f');
+  gradient.addColorStop(1, '#10201d');
   ctx.fillStyle = gradient;
   ctx.fillRect(0, 0, WIDTH, HEIGHT);
-  
-  // ✨ Pattern
-  ctx.fillStyle = 'rgba(232, 199, 122, 0.03)';
-  for (let x = 0; x < WIDTH; x += 50) {
-    for (let y = 0; y < HEIGHT; y += 50) {
-      ctx.beginPath();
-      ctx.arc(x, y, 2, 0, Math.PI * 2);
-      ctx.fill();
-    }
-  }
 
-  // =========================
   // HEADER
-  // =========================
-  ctx.save();
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-
-  ctx.fillStyle = '#f4dba5';
-  ctx.font = 'bold 52px Georgia';
-  ctx.fillText(currentShareData.surah, WIDTH / 2, PAD + 60);
-
   ctx.fillStyle = '#e8c77a';
-  ctx.font = 'bold 40px Georgia';
-  ctx.fillText('Ayat ' + currentShareData.ayat, WIDTH / 2, PAD + 120);
-  ctx.restore();
+  ctx.font = 'bold 50px Arial';
+  ctx.textAlign = 'center';
+  ctx.fillText(currentShareData.surah, WIDTH / 2, 120);
 
-  // =========================
-  // AUTO FLOW START
-  // =========================
-  let y = PAD + 200;
+  ctx.font = '30px Arial';
+  ctx.fillText('Ayat ' + currentShareData.ayat, WIDTH / 2, 170);
 
-  // =========================
-  // 🔥 ARAB (AUTO SCALE)
-  // =========================
-  const arabFont = fitFontSize(
-    ctx,
-    currentShareData.arab,
-    CONTENT_W,
-    6,
-    380,
-    26,
-    44
-  );
+  // ARAB
+  ctx.fillStyle = '#ffffff';
+  ctx.font = '40px serif';
+  wrapText(ctx, currentShareData.arab, WIDTH - PAD, 300, CONTENT_W, 'right');
 
-  const arabLines = wrapTextLimited(
-    ctx,
-    currentShareData.arab,
-    CONTENT_W,
-    6,
-    arabFont
-  );
+  // ARTI
+  ctx.fillStyle = '#cccccc';
+  ctx.font = '24px Arial';
+  wrapText(ctx, currentShareData.arti, PAD, 600, CONTENT_W, 'left');
 
-  // Glow biar keren 😎
-  ctx.shadowColor = 'rgba(232, 199, 122, 0.25)';
-  ctx.shadowBlur = 20;
-
-  const arabHeight = arabLines.length * (arabFont * 1.25);
-
-  drawWrappedLines(
-    ctx,
-    arabLines,
-    WIDTH - PAD,
-    y,
-    '#f6f2e8',
-    'right',
-    arabFont,
-    1.25,
-    'Georgia',
-    'bold'
-  );
-
-  ctx.shadowBlur = 0;
-
-  y += arabHeight + 50;
-
-  // =========================
-  // 🔥 ARTI (AUTO SCALE)
-  // =========================
-  const artiFont = fitFontSize(
-    ctx,
-    currentShareData.arti,
-    CONTENT_W * 0.9,
-    5,
-    260,
-    16,
-    26
-  );
-
-  const artiLines = wrapTextLimited(
-    ctx,
-    currentShareData.arti,
-    CONTENT_W * 0.9,
-    5,
-    artiFont
-  );
-
-  drawWrappedLines(
-    ctx,
-    artiLines,
-    PAD,
-    y,
-    '#d4cec1',
-    'left',
-    artiFont,
-    1.4,
-    'Georgia'
-  );
-
-  // =========================
-  // FOOTER
-  // =========================
-  ctx.save();
-  ctx.textAlign = 'right';
-  ctx.textBaseline = 'bottom';
-  ctx.fillStyle = 'rgba(232, 199, 122, 0.4)';
-  ctx.font = 'italic 24px Georgia';
-  ctx.fillText('Qur\\\'an App by Hamba Allah', WIDTH - PAD, HEIGHT - PAD);
-  ctx.restore();
-
-  loading.classList.remove('open');
+  if (loading) loading.style.display = 'none';
 }
 
-// =========================
-// TEXT UTILS
-// =========================
-
-function wrapTextLimited(ctx, text, maxWidth, maxLines, fontSize) {
-  ctx.font = `bold ${fontSize}px Georgia`;
-  const words = text.split(' ');
-  const lines = [];
-  let line = '';
-  
-  for (let word of words) {
-    const test = line + (line ? ' ' : '') + word;
-    if (ctx.measureText(test).width > maxWidth && lines.length < maxLines - 1 && line) {
-      lines.push(line);
-      line = word;
-    } else {
-      line = test;
-    }
-  }
-  
-  if (line) {
-    if (lines.length < maxLines) {
-      lines.push(line);
-    } else {
-      lines[lines.length - 1] += '...';
-    }
-  }
-  
-  return lines;
-}
-
-function drawWrappedLines(ctx, lines, x, y, color, align, fontSize, lineRatio, fontFamily, weight = '') {
-  ctx.save();
+// TEXT WRAP SIMPLE
+function wrapText(ctx, text, x, y, maxWidth, align) {
   ctx.textAlign = align;
-  ctx.textBaseline = 'top';
-  ctx.fillStyle = color;
-  ctx.font = `${weight} ${fontSize}px ${fontFamily}`;
-  
-  const lineHeight = fontSize * lineRatio;
-  
-  lines.forEach((line, i) => {
-    ctx.fillText(line, x, y + i * lineHeight);
-  });
-  
-  ctx.restore();
-}
-
-// =========================
-// AUTO SCALE ENGINE
-// =========================
-
-function fitFontSize(ctx, text, maxWidth, maxLines, maxHeight, minSize, maxSize) {
-  let left = minSize, right = maxSize;
-  let bestSize = minSize;
-  
-  while (left <= right) {
-    const mid = Math.floor((left + right) / 2);
-    ctx.font = `bold ${mid}px Georgia`;
-    
-    const lines = wrapTextSimple(ctx, text, maxWidth);
-    const lineHeight = mid * 1.3;
-    
-    if (lines.length <= maxLines && (lines.length * lineHeight <= maxHeight)) {
-      bestSize = mid;
-      left = mid + 1;
-    } else {
-      right = mid - 1;
-    }
-  }
-  
-  return bestSize;
-}
-
-function wrapTextSimple(ctx, text, maxWidth) {
   const words = text.split(' ');
-  const lines = [];
   let line = '';
-  
-  for (let word of words) {
-    const test = line + word + ' ';
-    if (ctx.measureText(test).width > maxWidth && line) {
-      lines.push(line.trim());
-      line = word + ' ';
+  let lineHeight = 40;
+
+  for (let n = 0; n < words.length; n++) {
+    let testLine = line + words[n] + ' ';
+    let metrics = ctx.measureText(testLine);
+
+    if (metrics.width > maxWidth && n > 0) {
+      ctx.fillText(line, x, y);
+      line = words[n] + ' ';
+      y += lineHeight;
     } else {
-      line = test;
+      line = testLine;
     }
   }
-  
-  if (line) lines.push(line.trim());
-  return lines;
+
+  ctx.fillText(line, x, y);
 }
 
-// =========================
-// DOWNLOAD & SHARE
-// =========================
-
+// DOWNLOAD
 function downloadShareImage() {
   const canvas = document.getElementById('shareCanvas');
+  if (!canvas) return;
+
   const link = document.createElement('a');
   link.download = `ayat-${currentShareData.surah}-${currentShareData.ayat}.png`;
-  link.href = canvas.toDataURL('image/png');
+  link.href = canvas.toDataURL();
   link.click();
 }
 
+// SHARE
 function shareNative() {
   const canvas = document.getElementById('shareCanvas');
-  
+
   if (navigator.share && canvas) {
     canvas.toBlob(blob => {
       const file = new File([blob], 'ayat.png', { type: 'image/png' });
+
       navigator.share({
-        title: `${currentShareData.surah} Ayat ${currentShareData.ayat}`,
-        text: currentShareData.arti.substring(0, 100) + '...',
+        title: currentShareData.surah,
+        text: currentShareData.arti,
         files: [file]
-      }).catch(console.error);
+      });
     });
   } else {
     downloadShareImage();
