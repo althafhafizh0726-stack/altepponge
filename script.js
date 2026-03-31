@@ -251,7 +251,7 @@ function generateImage() {
   ctx.textBaseline = 'bottom';
   ctx.fillStyle = 'rgba(232, 199, 122, 0.4)';
   ctx.font = 'italic 24px Georgia';
-  ctx.fillText('Qur\\\'an App by Hamba Allah', WIDTH - PAD, HEIGHT - PAD);
+  ctx.fillText('Quran App by Hamba Allah', WIDTH - PAD, HEIGHT - PAD);
   ctx.restore();
 
   loading.classList.remove('open');
