@@ -545,7 +545,7 @@ html+='<div class="ayat" id="ayat-'+i+'">'+
 '<div class="progress"><div class="progress-bar" id="bar-'+i+'"></div></div>'+
 '<div class="ayat-buttons">'+
 '<button id="play-btn-'+i+'" class="play-btn secondary" onclick="togglePlayOne('+i+')"'+(audioList[i] ? '' : ' disabled')+'>'+(audioList[i] ? 'Play Ayat' : 'Audio Tidak Ada')+'</button>'+
-'<button class="share-ayat-btn" onclick="shareAyat('+i+')">Fitur Ini Sedang Dalam Perbaikan</button>'+
+'<button class="share-ayat-btn" onclick="shareAyat('+i+')">Share</button>'+
 '</div>'+
 '</div>';
 
