@@ -9,7 +9,6 @@ var VERSES_URL = 'https://api.quran.com/api/v4/quran/verses/uthmani?chapter_numb
 var VERSES_TAJWEED_URL = 'https://api.quran.com/api/v4/quran/verses/uthmani_tajweed?chapter_number=';
 var TRANSLATION_URL = 'https://api.quran.com/api/v4/quran/translations/33?chapter_number=';
 var RECITATION_URL = 'https://api.quran.com/api/v4/quran/recitations/7?chapter_number=';
-var TAFSIR_URL = 'https://api.quran.com/api/v4/tafsirs/169?chapter_number=';
 var LAST_READ_KEY = 'quran-last-read';
 var THEME_KEY = 'quran-theme';
 var BOOKMARKS_KEY = 'quran-bookmarks';
@@ -141,7 +140,6 @@ var isPlayingAll = false;
 var indexPlay = 0;
 var raf = null;
 var currentShareData = null;
-var currentTafsirMap = {};
 var currentSurahVerseCount = 0;
 var currentAyahObserver = null;
 var TAJWEED_LEGEND = [
@@ -154,6 +152,86 @@ var TAJWEED_LEGEND = [
   { label: 'Cokelat', className: 'qlq', title: 'Qalqalah', arabic: 'قلقلة', reading: 'Huruf dipantulkan ringan dan terdengar memantul.' },
   { label: 'Abu-abu', className: 'ham_wasl', title: 'Hamzatul Washl', arabic: 'همزة الوصل', reading: 'Dibaca halus saat memulai dan biasanya gugur saat disambung.' }
 ];
+
+function getActionIconSvg(type) {
+  if (type === 'pause') {
+    return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5h3v14H8zM13 5h3v14h-3z" fill="currentColor"></path></svg>';
+  }
+
+  if (type === 'copy') {
+    return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 7V5a2 2 0 0 1 2-2h7a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2v3a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2zm2-2v2h3a2 2 0 0 1 2 2v5h2V5zm3 14V9H7v10z" fill="currentColor"></path></svg>';
+  }
+
+  if (type === 'bookmark') {
+    return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4h10a2 2 0 0 1 2 2v14l-7-4-7 4V6a2 2 0 0 1 2-2z" fill="currentColor"></path></svg>';
+  }
+
+  if (type === 'bookmark-filled') {
+    return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h10a2 2 0 0 1 2 2v16l-7-4-7 4V5a2 2 0 0 1 2-2z" fill="currentColor"></path></svg>';
+  }
+
+  if (type === 'share') {
+    return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l6 6-6 6v-4c-5 0-8 1.5-11 6 1-6 4-10 11-11z" fill="currentColor"></path></svg>';
+  }
+
+  return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l10-6.5z" fill="currentColor"></path></svg>';
+}
+
+function getPlayButtonMarkup(state, hasAudio) {
+  if (!hasAudio) {
+    return '<span class="icon-btn-icon" aria-hidden="true">' + getActionIconSvg('play') + '</span><span class="sr-only">Audio tidak ada</span>';
+  }
+
+  if (state === 'pause') {
+    return '<span class="icon-btn-icon" aria-hidden="true">' + getActionIconSvg('pause') + '</span><span class="sr-only">Pause ayat</span>';
+  }
+
+  if (state === 'resume') {
+    return '<span class="icon-btn-icon" aria-hidden="true">' + getActionIconSvg('play') + '</span><span class="sr-only">Lanjutkan ayat</span>';
+  }
+
+  return '<span class="icon-btn-icon" aria-hidden="true">' + getActionIconSvg('play') + '</span><span class="sr-only">Play ayat</span>';
+}
+
+function updatePlayButtonState(button, state, hasAudio) {
+  if (!button) {
+    return;
+  }
+
+  var label = 'Play ayat';
+
+  if (!hasAudio) {
+    label = 'Audio tidak ada';
+  } else if (state === 'pause') {
+    label = 'Pause ayat';
+  } else if (state === 'resume') {
+    label = 'Lanjutkan ayat';
+  }
+
+  button.innerHTML = getPlayButtonMarkup(state, hasAudio);
+  button.setAttribute('aria-label', label);
+  button.setAttribute('title', label);
+}
+
+function getBookmarkButtonMarkup(active) {
+  var label = active ? 'Bookmark tersimpan' : 'Bookmark ayat';
+  var iconType = active ? 'bookmark-filled' : 'bookmark';
+
+  return '<span class="icon-btn-icon" aria-hidden="true">' + getActionIconSvg(iconType) + '</span><span class="sr-only">' + label + '</span>';
+}
+
+function updateBookmarkButtonState(button, active) {
+  if (!button) {
+    return;
+  }
+
+  var label = active ? 'Bookmark tersimpan' : 'Bookmark ayat';
+
+  button.classList.toggle('is-bookmarked', active);
+  button.innerHTML = getBookmarkButtonMarkup(active);
+  button.setAttribute('aria-label', label);
+  button.setAttribute('title', label);
+}
 
 applySavedTheme();
 bindStaticEvents();
@@ -301,10 +379,6 @@ function cleanTranslation(value) {
   return textarea.value;
 }
 
-function cleanTafsir(value) {
-  return cleanTranslation(value);
-}
-
 function getSearchValue() {
   return search ? search.value.trim().toLowerCase() : '';
 }
@@ -408,27 +482,20 @@ function loadSurah(id) {
       return { verses: [] };
     }),
     fetchJson(TRANSLATION_URL + id),
-    fetchJson(RECITATION_URL + id),
-    fetchJson(TAFSIR_URL + id).catch(function () {
-      return { tafsirs: [] };
-    })
+    fetchJson(RECITATION_URL + id)
   ])
     .then(function (responses) {
       var arab = responses[0].verses || [];
       var tajweedVerses = responses[1].verses || [];
       var translations = responses[2].translations || [];
       var audioFiles = responses[3].audio_files || [];
-      var tafsirs = responses[4].tafsirs || [];
       var selected = findSurahById(id);
       var translationMap = {};
       var tajweedMap = {};
-      var tafsirMap = {};
       var html = '';
 
       currentSurahName = selected ? selected.name_simple : 'Surah ' + id;
       currentSurahVerseCount = arab.length;
-      currentTafsirMap = {};
-
       for (var j = 0; j < translations.length; j++) {
         if (translations[j] && translations[j].verse_key) {
           translationMap[translations[j].verse_key] = translations[j];
@@ -441,14 +508,6 @@ function loadSurah(id) {
         }
       }
 
-      for (var m = 0; m < tafsirs.length; m++) {
-        if (tafsirs[m] && tafsirs[m].verse_key) {
-          tafsirMap[tafsirs[m].verse_key] = cleanTafsir(tafsirs[m].text);
-        }
-      }
-
-      currentTafsirMap = tafsirMap;
-
       audioList = [];
       for (var k = 0; k < audioFiles.length; k++) {
         audioList.push(audioFiles[k].url ? 'https://verses.quran.com/' + audioFiles[k].url : null);
@@ -456,8 +515,7 @@ function loadSurah(id) {
 
       html += '<section class="detail-panel">';
       html += '<div class="detail-shell">';
-      html += '<div id="surah-top-anchor"></div>';
-      html += '<div class="detail-head">';
+      html += '<div class="detail-head" id="surah-top-anchor">';
       html += '<div>';
       html += '<h2 class="detail-title">' + escapeHtml(selected ? selected.name_simple : 'Detail Surah') + '</h2>';
       html += '<div class="detail-subtitle">' + escapeHtml(getSurahMeaning(id, selected && selected.translated_name ? selected.translated_name.name : '')) + '</div>';
@@ -473,19 +531,18 @@ function loadSurah(id) {
       html += '</div>';
       html += '</div>';
 
-      if (selected && selected.id !== 9) {
-        html += '<div class="bismillah-card arab" id="bismillah-anchor">بِسْمِ اللّٰهِ الرَّحْمٰنِ الرَّحِيْمِ</div>';
-      }
-
       html += '<div class="player-banner">';
       html += '<div>';
       html += '<div class="player-status-label">Status Pemutar</div>';
       html += '<div class="player-status-text" id="player-status-text">Pilih ayat atau tekan Play Semua Ayat untuk mulai mendengarkan.</div>';
       html += '</div>';
       html += '</div>';
-      html += buildQuickJump(selected && selected.id !== 9);
+      html += buildQuickJump();
       html += buildReadingTools(id, arab.length);
       html += buildTajweedGuide();
+      if (id !== 1 && id !== 9) {
+        html += '<div class="bismillah-card arab" id="bismillah-anchor">بِسْمِ اللّٰهِ الرَّحْمٰنِ الرَّحِيْمِ</div>';
+      }
 
       html += '<div class="ayat-list">';
 
@@ -501,14 +558,12 @@ function loadSurah(id) {
         html += '<div class="ayat-number">Ayat ' + (i + 1) + '</div>';
         html += '<div class="arab arab-tajweed">' + arabicHtml + '</div>';
         html += '<div class="arti">' + escapeHtml(ayatText) + '</div>';
-        html += '<button type="button" class="tafsir-toggle" onclick="toggleTafsir(' + i + ')">Tafsir Ayat</button>';
-        html += '<div class="tafsir-box" id="tafsir-box-' + i + '" hidden><div class="tafsir-box-title">Tafsir Ringkas</div><div class="tafsir-box-text" id="tafsir-text-' + i + '">' + escapeHtml(tafsirMap[verse.verse_key] || 'Tafsir belum tersedia untuk ayat ini.') + '</div></div>';
         html += '<div class="progress"><div class="progress-bar" id="bar-' + i + '"></div></div>';
         html += '<div class="ayat-buttons">';
-        html += '<button type="button" id="play-btn-' + i + '" class="play-btn secondary" onclick="togglePlayOne(' + i + ')"' + (audioList[i] ? '' : ' disabled') + '>' + (audioList[i] ? 'Play Ayat' : 'Audio Tidak Ada') + '</button>';
-        html += '<button type="button" class="secondary" onclick="copyAyat(' + i + ')">Salin</button>';
-        html += '<button type="button" class="secondary bookmark-btn' + (bookmarkActive ? ' is-bookmarked' : '') + '" id="bookmark-btn-' + i + '" onclick="toggleBookmark(' + id + ',' + i + ')">' + (bookmarkActive ? 'Tersimpan' : 'Bookmark') + '</button>';
-        html += '<button type="button" class="share-ayat-btn" onclick="shareAyat(' + i + ')">Bagikan</button>';
+        html += '<button type="button" id="play-btn-' + i + '" class="play-btn secondary icon-btn" aria-label="' + (audioList[i] ? 'Play ayat' : 'Audio tidak ada') + '" title="' + (audioList[i] ? 'Play ayat' : 'Audio tidak ada') + '" onclick="togglePlayOne(' + i + ')"' + (audioList[i] ? '' : ' disabled') + '>' + getPlayButtonMarkup('play', !!audioList[i]) + '</button>';
+        html += '<button type="button" class="secondary icon-btn" aria-label="Salin ayat" title="Salin ayat" onclick="copyAyat(' + i + ')"><span class="icon-btn-icon" aria-hidden="true">' + getActionIconSvg('copy') + '</span><span class="sr-only">Salin ayat</span></button>';
+        html += '<button type="button" class="secondary bookmark-btn icon-btn' + (bookmarkActive ? ' is-bookmarked' : '') + '" id="bookmark-btn-' + i + '" aria-label="' + (bookmarkActive ? 'Bookmark tersimpan' : 'Bookmark ayat') + '" title="' + (bookmarkActive ? 'Bookmark tersimpan' : 'Bookmark ayat') + '" onclick="toggleBookmark(' + id + ',' + i + ')">' + getBookmarkButtonMarkup(bookmarkActive) + '</button>';
+        html += '<button type="button" class="share-ayat-btn icon-btn" aria-label="Bagikan ayat" title="Bagikan ayat" onclick="shareAyat(' + i + ')"><span class="icon-btn-icon" aria-hidden="true">' + getActionIconSvg('share') + '</span><span class="sr-only">Bagikan ayat</span></button>';
         html += '</div>';
         html += '</article>';
       }
@@ -616,7 +671,7 @@ function updatePlayerUI() {
     var btn = document.getElementById('play-btn-' + i);
     if (btn) {
       btn.classList.remove('is-active');
-      btn.textContent = audioList[i] ? 'Play Ayat' : 'Audio Tidak Ada';
+      updatePlayButtonState(btn, 'play', !!audioList[i]);
     }
   }
 
@@ -630,7 +685,7 @@ function updatePlayerUI() {
 
     if (activeBtn) {
       activeBtn.classList.add('is-active');
-      activeBtn.textContent = currentAudio && !currentAudio.paused ? 'Pause Ayat' : 'Lanjutkan Ayat';
+      updatePlayButtonState(activeBtn, currentAudio && !currentAudio.paused ? 'pause' : 'resume', !!audioList[currentPlayIndex]);
     }
   }
 
@@ -1270,10 +1325,10 @@ function toggleTajweedGuide() {
   panel.hidden = !panel.hidden;
 }
 
-function buildQuickJump(hasBismillah) {
+function buildQuickJump() {
   var html = '';
   html += '<div class="detail-fab" id="detail-fab">';
-  html += '<button type="button" class="detail-fab-btn detail-fab-icon" onclick="scrollToBismillah()" aria-label="' + (hasBismillah ? 'Ke Bismillah' : 'Ke atas surah') + '" title="' + (hasBismillah ? 'Ke Bismillah' : 'Ke atas surah') + '">&#8593;</button>';
+  html += '<button type="button" class="detail-fab-btn detail-fab-icon" onclick="scrollToSurahTop()" aria-label="Ke judul surah" title="Ke judul surah">&#8593;</button>';
   html += '</div>';
   return html;
 }
@@ -1391,15 +1446,6 @@ function disconnectAyahObserver() {
   }
 }
 
-function toggleTafsir(index) {
-  var box = document.getElementById('tafsir-box-' + index);
-  if (!box) {
-    return;
-  }
-
-  box.hidden = !box.hidden;
-}
-
 function fallbackCopyText(text) {
   var textarea = document.createElement('textarea');
   textarea.value = text;
@@ -1507,8 +1553,7 @@ function updateBookmarkButton(ayatIndex, active) {
     return;
   }
 
-  btn.classList.toggle('is-bookmarked', active);
-  btn.textContent = active ? 'Tersimpan' : 'Bookmark';
+  updateBookmarkButtonState(btn, active);
 }
 
 function renderBookmarks() {
