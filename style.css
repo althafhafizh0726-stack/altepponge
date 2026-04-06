@@ -789,9 +789,22 @@ body.day .surah-arrow{
 .bookmark-arab{
   margin:16px 0 10px;
   text-align:right;
+  direction:rtl;
+  unicode-bidi:plaintext;
   font-family:"Amiri Quran", "Traditional Arabic", serif;
   font-size:28px;
   line-height:1.9;
+  letter-spacing:0;
+  overflow-wrap:anywhere;
+}
+
+.bookmark-arab-text{
+  font:inherit;
+}
+
+.bookmark-arab .ayah-mark{
+  margin-inline-start:8px;
+  font-size:.78em;
 }
 
 .bookmark-arti{
@@ -1195,7 +1208,8 @@ button:disabled{
 }
 
 .ayah-mark{
-  display:inline-block;
+  display:inline-flex;
+  align-items:center;
   margin-inline-start:10px;
   color:var(--accent-strong);
   font-family:"Amiri Quran", "Traditional Arabic", serif;
@@ -1203,6 +1217,8 @@ button:disabled{
   line-height:1;
   white-space:nowrap;
   vertical-align:middle;
+  direction:rtl;
+  unicode-bidi:isolate;
 }
 
 .arab-tajweed tajweed.ham_wasl,
@@ -1659,4 +1675,3 @@ button:disabled{
     font-size:18px;
   }
 }
-
