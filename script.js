@@ -1694,7 +1694,7 @@ function toggleBookmark(surahId, ayatIndex) {
       surahId: surahId,
       surahName: currentSurahName || ('Surah ' + surahId),
       ayatNumber: ayatNumber,
-      arab: arabEl ? arabEl.textContent.replace(/\s+/g, ' ').trim() : '',
+      arab: arabEl ? stripExistingAyahMarker(arabEl.textContent.replace(/\s+/g, ' ').trim()) : '',
       arti: artiEl ? artiEl.textContent.trim() : '',
       savedAt: Date.now()
     });
@@ -1734,6 +1734,7 @@ function renderBookmarks() {
     html += '<div class="bookmark-list">';
     for (var i = 0; i < items.length; i++) {
       var item = items[i];
+      var bookmarkArabicText = stripExistingAyahMarker(item.arab);
       html += '<article class="bookmark-card">';
       html += '<div class="bookmark-top">';
       html += '<div>';
@@ -1742,7 +1743,7 @@ function renderBookmarks() {
       html += '</div>';
       html += '<button type="button" class="secondary" onclick="removeBookmark(' + item.surahId + ',' + item.ayatNumber + ')">Hapus</button>';
       html += '</div>';
-      html += '<div class="bookmark-arab">' + escapeHtml(item.arab) + '</div>';
+      html += '<div class="bookmark-arab"><span class="bookmark-arab-text">' + escapeHtml(bookmarkArabicText) + '</span>' + getMushafAyahMarker(item.ayatNumber) + '</div>';
       html += '<div class="bookmark-arti">' + escapeHtml(item.arti) + '</div>';
       html += '<div class="bookmark-actions">';
       html += '<button type="button" class="primary" onclick="openBookmark(' + item.surahId + ',' + item.ayatNumber + ')">Buka Ayat</button>';
@@ -1806,4 +1807,3 @@ function updateSearchSummary(count, failed) {
     copyEl.textContent = 'Tidak ada surah yang cocok dengan pencarian "' + query + '".';
   }
 }
-
