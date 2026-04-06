@@ -3,25 +3,57 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<link rel="icon" type="image/jpeg" href="https://files.catbox.moe/cnuo2n.png">
-<meta property="og:title" content="MyQuran — Aplikasi Al-Qur’an Online">
-<meta property="og:description" content="Baca Al-Qur’an dengan tampilan tenang, rapi, dan nyaman — untuk menemani ibadahmu setiap hari.">
-<meta property="og:image" content="https://files.catbox.moe/cnuo2n.png">
-<meta property="og:url" content="https://myquran-id.vercel.app">
+<meta name="description" content="Baca Al-Qur'an online dengan tampilan bersih dan nyaman. Cari surah, baca ayat dengan tajwid berwarna, dengarkan audio per ayat, simpan bacaan terakhir, dan bagikan ayat dengan mudah.">
+<meta name="keywords" content="Al-Qur'an, Quran, baca Al-Qur'an online, tajwid warna, audio ayat, terjemahan Indonesia, daftar surah, ayat Al-Qur'an, Quran Explorer, mushaf digital">
+<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
+<meta name="author" content="Project Irmaf">
+<meta name="application-name" content="Qur'an Explorer">
+<meta name="theme-color" content="#08110f">
+<meta name="format-detection" content="telephone=no">
+<link rel="canonical" href="https://myquran-id.vercel.app/">
+<meta property="og:locale" content="id_ID">
 <meta property="og:type" content="website">
+<meta property="og:title" content="Qur'an Explorer | Baca Al-Qur'an Online dengan Tajwid dan Audio">
+<meta property="og:description" content="Baca Al-Qur'an online dengan tajwid berwarna, audio per ayat, terjemahan yang rapi, dan fitur simpan bacaan terakhir.">
+<meta property="og:site_name" content="Qur'an Explorer">
+<meta property="og:url" content="https://myquran-id.vercel.app/">
+<meta property="og:image" content="https://files.catbox.moe/cnuo2n.png">
+<meta property="og:image:alt" content="Ikon Qur'an Explorer">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="1200">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="MyQuran — Aplikasi Al-Qur’an Online">
-<meta name="twitter:description" content="Baca Al-Qur’an dengan tampilan tenang, rapi, dan nyaman — untuk menemani ibadahmu setiap hari.">
+<meta name="twitter:title" content="Qur'an Explorer | Baca Al-Qur'an Online dengan Tajwid dan Audio">
+<meta name="twitter:description" content="Cari surah, baca ayat dengan tajwid berwarna, dengarkan audio, dan lanjutkan bacaan terakhir dengan lebih nyaman.">
 <meta name="twitter:image" content="https://files.catbox.moe/cnuo2n.png">
-<title>MyQuran — Aplikasi Al-Qur’an Online</title>
+<meta name="twitter:url" content="https://myquran-id.vercel.app/">
+<link rel="icon" type="image/jpeg" href="https://files.catbox.moe/cnuo2n.png">
+<title>Qur'an Explorer | Baca Al-Qur'an Online dengan Tajwid dan Audio</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Amiri+Quran&family=IBM+Plex+Sans+Arabic:wght@400;500;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="style-clean.css">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "Qur'an Explorer",
+  "url": "https://myquran-id.vercel.app/",
+  "applicationCategory": "EducationalApplication",
+  "operatingSystem": "Web",
+  "inLanguage": "id",
+  "description": "Aplikasi web untuk membaca Al-Qur'an online dengan tajwid berwarna, audio per ayat, terjemahan Indonesia, dan simpan bacaan terakhir.",
+  "image": "https://files.catbox.moe/cnuo2n.png",
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "USD"
+  }
+}
+</script>
 </head>
 <body>
 <main class="container">
-  <section class="hero">
+  <section class="hero" id="hero-top-anchor">
     <div class="hero-grid">
       <div>
         <div class="eyebrow">Qur'an Explorer</div>
@@ -34,9 +66,7 @@
           <div class="hero-chip">Simpan bacaan terakhir</div>
         </div>
         <div class="hero-actions">
-          <button type="button" class="primary" onclick="loadSurah(1)">Buka Al-Fatihah</button>
-          <button type="button" class="secondary" onclick="openLastRead()">Lanjutkan Bacaan Terakhir</button>
-          <button type="button" class="theme-toggle" id="themeToggle">Mode Terang</button>
+          <button type="button" class="theme-toggle icon-btn" id="themeToggle" aria-label="Ganti tema" title="Ganti tema"></button>
         </div>
       </div>
 
@@ -57,7 +87,14 @@
     <div class="search-box">
       <label class="sr-only" for="search">Cari surah</label>
       <input id="search" placeholder="Cari surah, misalnya Al-Fatihah..." autocomplete="off">
+      <button type="button" class="search-clear-btn" id="searchClearBtn" aria-label="Hapus pencarian" title="Hapus pencarian" hidden>&times;</button>
     </div>
+    <div class="quick-tools" aria-label="Aksi cepat">
+      <button type="button" class="secondary quick-tool-btn" onclick="focusSearch()">Cari Surah</button>
+      <button type="button" class="secondary quick-tool-btn" onclick="openLastRead()">Lanjutkan Terakhir</button>
+      <button type="button" class="secondary quick-tool-btn" onclick="scrollToBookmarks()">Bookmark</button>
+    </div>
+    <p class="quick-tools-hint">Pakai <kbd>/</kbd> untuk fokus ke pencarian dan <kbd>Enter</kbd> untuk membuka hasil teratas.</p>
   </section>
 
   <div class="stack">
@@ -66,12 +103,15 @@
     <section id="detail" aria-live="polite"></section>
   </div>
 </main>
+<div class="detail-fab" id="detail-fab">
+  <button type="button" class="detail-fab-btn detail-fab-icon" id="detail-fab-btn" onclick="handleFloatingJump()" aria-label="Ke atas" title="Ke atas">&#8593;</button>
+</div>
 <footer class="app-footer">
   <div class="app-footer-inner">
     <p class="app-footer-copy">Data Al-Qur'an disajikan dari Quran Foundation API. Semoga bermanfaat untuk tilawah harian.</p>
     <button type="button" class="secondary app-footer-btn" onclick="window.scrollTo({ top: 0, behavior: 'smooth' })">Ke Atas</button>
   </div>
 </footer>
-<script src="script.js"></script>
+<script src="script-clean.js"></script>
 </body>
 </html>
