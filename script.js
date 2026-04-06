@@ -3,6 +3,8 @@ var detailEl = document.getElementById('detail');
 var bookmarksEl = document.getElementById('bookmarks');
 var search = document.getElementById('search');
 var themeToggle = document.getElementById('themeToggle');
+var detailFabButton = document.getElementById('detail-fab-btn');
+var searchClearBtn = document.getElementById('searchClearBtn');
 
 var CHAPTERS_URL = 'https://api.quran.com/api/v4/chapters';
 var VERSES_URL = 'https://api.quran.com/api/v4/quran/verses/uthmani?chapter_number=';
@@ -154,6 +156,14 @@ var TAJWEED_LEGEND = [
 ];
 
 function getActionIconSvg(type) {
+  if (type === 'sun') {
+    return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4a1 1 0 0 1 1 1v1.2a1 1 0 1 1-2 0V5a1 1 0 0 1 1-1zm0 12.8a4.8 4.8 0 1 0 0-9.6 4.8 4.8 0 0 0 0 9.6zM6.34 5.93a1 1 0 0 1 1.41 0l.86.85a1 1 0 1 1-1.42 1.42l-.85-.86a1 1 0 0 1 0-1.41zm10.2 10.19a1 1 0 0 1 1.41 0l.86.85a1 1 0 0 1-1.42 1.42l-.85-.86a1 1 0 0 1 0-1.41zM4 12a1 1 0 0 1 1-1h1.2a1 1 0 0 1 0 2H5a1 1 0 0 1-1-1zm12.8 0a1 1 0 0 1 1-1H19a1 1 0 1 1 0 2h-1.2a1 1 0 0 1-1-1zM6.34 18.07a1 1 0 0 1 0-1.41l.85-.86a1 1 0 0 1 1.42 1.42l-.86.85a1 1 0 0 1-1.41 0zM16.54 7.88a1 1 0 0 1 0-1.41l.85-.85a1 1 0 1 1 1.42 1.41l-.86.86a1 1 0 0 1-1.41-.01z" fill="currentColor"></path></svg>';
+  }
+
+  if (type === 'moon') {
+    return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.69 3.37a1 1 0 0 1 .98 1.59A7.5 7.5 0 1 0 19.04 15a1 1 0 0 1 1.58.99A9.5 9.5 0 1 1 13.7 3.43c.33-.06.67-.08.99-.06z" fill="currentColor"></path></svg>';
+  }
+
   if (type === 'pause') {
     return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5h3v14H8zM13 5h3v14h-3z" fill="currentColor"></path></svg>';
   }
@@ -243,14 +253,40 @@ function bindStaticEvents() {
   if (search) {
     search.addEventListener('input', function () {
       renderFilteredList();
+      updateSearchClearButton();
     });
+
+    search.addEventListener('keydown', function (event) {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        openFirstFilteredSurah();
+      }
+
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        clearSearch();
+      }
+    });
+  }
+
+  if (searchClearBtn) {
+    searchClearBtn.addEventListener('click', clearSearch);
   }
 
   if (themeToggle) {
     themeToggle.addEventListener('click', toggleTheme);
   }
 
+  window.addEventListener('scroll', updateFloatingJumpButton, { passive: true });
+  window.addEventListener('resize', updateFloatingJumpButton);
+
   document.addEventListener('keydown', function (event) {
+    if (event.key === '/' && !isTypingField(document.activeElement)) {
+      event.preventDefault();
+      focusSearch();
+      return;
+    }
+
     if (event.key === 'Escape') {
       closeShareModal();
     }
@@ -263,6 +299,8 @@ function applySavedTheme() {
     document.body.classList.add('day');
   }
   updateThemeButtonLabel();
+  updateFloatingJumpButton();
+  updateSearchClearButton();
 }
 
 function toggleTheme() {
@@ -275,7 +313,41 @@ function updateThemeButtonLabel() {
   if (!themeToggle) {
     return;
   }
-  themeToggle.textContent = document.body.classList.contains('day') ? 'Mode Gelap' : 'Mode Terang';
+
+  var isDay = document.body.classList.contains('day');
+  var label = isDay ? 'Aktifkan mode gelap' : 'Aktifkan mode terang';
+  var iconType = isDay ? 'moon' : 'sun';
+
+  themeToggle.innerHTML = '<span class="icon-btn-icon" aria-hidden="true">' + getActionIconSvg(iconType) + '</span><span class="sr-only">' + label + '</span>';
+  themeToggle.setAttribute('aria-label', label);
+  themeToggle.setAttribute('title', label);
+}
+
+function updateFloatingJumpButton() {
+  if (!detailFabButton) {
+    return;
+  }
+
+  var detailAnchor = document.getElementById('surah-top-anchor');
+  var scrollTop = window.pageYOffset || document.documentElement.scrollTop || 0;
+  var detailTop = detailAnchor ? (detailAnchor.getBoundingClientRect().top + scrollTop) : Infinity;
+  var useDetailTarget = !!detailAnchor && scrollTop >= detailTop - 140;
+  var label = useDetailTarget ? 'Ke judul surah' : 'Ke atas';
+
+  detailFabButton.setAttribute('data-target', useDetailTarget ? 'detail' : 'hero');
+  detailFabButton.setAttribute('aria-label', label);
+  detailFabButton.setAttribute('title', label);
+}
+
+function handleFloatingJump() {
+  var target = detailFabButton ? detailFabButton.getAttribute('data-target') : 'hero';
+
+  if (target === 'detail') {
+    scrollToSurahTop();
+    return;
+  }
+
+  scrollToHeroTop();
 }
 
 function fetchJson(url) {
@@ -301,7 +373,58 @@ function loadChapters() {
     .catch(function () {
       setListStatus('Gagal memuat daftar surah. Periksa koneksi lalu coba lagi.', true);
       updateSearchSummary(0, true);
+    })
+    .finally(function () {
+      updateFloatingJumpButton();
     });
+}
+
+function isTypingField(element) {
+  if (!element) {
+    return false;
+  }
+
+  var tag = element.tagName;
+  return tag === 'INPUT' || tag === 'TEXTAREA' || element.isContentEditable;
+}
+
+function focusSearch() {
+  if (!search) {
+    return;
+  }
+
+  search.focus();
+  search.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+function clearSearch() {
+  if (!search) {
+    return;
+  }
+
+  search.value = '';
+  filteredSurahs = all.slice();
+  render(filteredSurahs);
+  updateSearchSummary(filteredSurahs.length);
+  updateSearchClearButton();
+  focusSearch();
+}
+
+function updateSearchClearButton() {
+  if (!searchClearBtn || !search) {
+    return;
+  }
+
+  searchClearBtn.hidden = !search.value.trim();
+}
+
+function openFirstFilteredSurah() {
+  if (!filteredSurahs.length) {
+    showToast('Tidak ada surah yang cocok dengan pencarian.');
+    return;
+  }
+
+  loadSurah(filteredSurahs[0].id);
 }
 
 function setListStatus(message, isError) {
@@ -552,10 +675,10 @@ function loadSurah(id) {
         var tajweedVerse = tajweedMap[verse.verse_key] || null;
         var ayatText = cleanTranslation(translation ? translation.text : '');
         var bookmarkActive = isBookmarked(id, i + 1);
-        var arabicHtml = renderArabicVerse(verse, tajweedVerse);
+        var arabicHtml = renderArabicVerse(verse, tajweedVerse, i + 1);
 
         html += '<article class="ayat" id="ayat-' + i + '">';
-        html += '<div class="ayat-number">Ayat ' + (i + 1) + '</div>';
+        html += '<div class="ayat-number">' + getMushafAyahMarker(i + 1) + '</div>';
         html += '<div class="arab arab-tajweed">' + arabicHtml + '</div>';
         html += '<div class="arti">' + escapeHtml(ayatText) + '</div>';
         html += '<div class="progress"><div class="progress-bar" id="bar-' + i + '"></div></div>';
@@ -580,6 +703,7 @@ function loadSurah(id) {
       ensureShareModal();
       setupAyahObserver();
       updatePlayerUI();
+      updateFloatingJumpButton();
       scrollToDetail();
 
       if (options.targetAyahNumber) {
@@ -627,6 +751,22 @@ function scrollToList() {
   if (listEl) {
     listEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
+}
+
+function scrollToBookmarks() {
+  if (bookmarksEl) {
+    bookmarksEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+}
+
+function scrollToHeroTop() {
+  var anchor = document.getElementById('hero-top-anchor');
+  if (anchor) {
+    anchor.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    return;
+  }
+
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 function scrollToDetail() {
@@ -901,11 +1041,8 @@ function ensureShareModal() {
 }
 
 function removeDetailFab() {
-  var fab = document.getElementById('detail-fab');
-  if (fab) {
-    fab.remove();
-  }
   disconnectAyahObserver();
+  updateFloatingJumpButton();
 }
 
 function shareAyat(ayatIndex) {
@@ -1170,11 +1307,26 @@ function copyAyat(index) {
   fallbackCopyText(text);
 }
 
-function renderArabicVerse(verse, tajweedVerse) {
+function toArabicDigits(value) {
+  return String(value || '').replace(/\d/g, function (digit) {
+    return String.fromCharCode(1632 + parseInt(digit, 10));
+  });
+}
+
+function getMushafAyahMarker(ayatNumber) {
+  return '<span class="ayah-mark" aria-label="Ayat ' + ayatNumber + '">﴿' + toArabicDigits(ayatNumber) + '﴾</span>';
+}
+
+function renderArabicVerse(verse, tajweedVerse, ayatNumber) {
+  var text = '';
+
   if (tajweedVerse && tajweedVerse.text_uthmani_tajweed) {
-    return tajweedVerse.text_uthmani_tajweed;
+    text = tajweedVerse.text_uthmani_tajweed;
+  } else {
+    text = escapeHtml(verse && verse.text_uthmani ? verse.text_uthmani : '');
   }
-  return escapeHtml(verse && verse.text_uthmani ? verse.text_uthmani : '');
+
+  return text + ' ' + getMushafAyahMarker(ayatNumber);
 }
 
 function saveLastRead(payload) {
@@ -1326,17 +1478,14 @@ function toggleTajweedGuide() {
 }
 
 function buildQuickJump() {
-  var html = '';
-  html += '<div class="detail-fab" id="detail-fab">';
-  html += '<button type="button" class="detail-fab-btn detail-fab-icon" onclick="scrollToSurahTop()" aria-label="Ke judul surah" title="Ke judul surah">&#8593;</button>';
-  html += '</div>';
-  return html;
+  return '';
 }
 
 function scrollToSurahTop() {
   var anchor = document.getElementById('surah-top-anchor');
   if (anchor) {
     anchor.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    updateFloatingJumpButton();
     return;
   }
   scrollToDetail();
