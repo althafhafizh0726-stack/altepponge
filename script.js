@@ -678,7 +678,6 @@ function loadSurah(id) {
         var arabicHtml = renderArabicVerse(verse, tajweedVerse, i + 1);
 
         html += '<article class="ayat" id="ayat-' + i + '">';
-        html += '<div class="ayat-number">' + getMushafAyahMarker(i + 1) + '</div>';
         html += '<div class="arab arab-tajweed">' + arabicHtml + '</div>';
         html += '<div class="arti">' + escapeHtml(ayatText) + '</div>';
         html += '<div class="progress"><div class="progress-bar" id="bar-' + i + '"></div></div>';
