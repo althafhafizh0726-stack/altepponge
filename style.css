@@ -181,8 +181,7 @@ body.day .hero{
 body.day .hero-chip,
 body.day .section-tag,
 body.day .detail-pill,
-body.day .surah-stat,
-body.day .ayat-number{
+body.day .surah-stat{
   color:#7b5929;
 }
 
@@ -1173,21 +1172,6 @@ button:disabled{
 .ayat.is-focused{
   border-color:#f4dba5;
   box-shadow:0 0 0 4px rgba(244, 219, 165, 0.12);
-}
-
-.ayat-number{
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  min-width:auto;
-  height:auto;
-  padding:0;
-  margin-bottom:14px;
-  border-radius:0;
-  background:transparent;
-  color:var(--accent-strong);
-  font-size:20px;
-  line-height:1;
 }
 
 .arab{
