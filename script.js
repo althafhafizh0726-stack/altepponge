@@ -1316,6 +1316,14 @@ function getMushafAyahMarker(ayatNumber) {
   return '<span class="ayah-mark" aria-label="Ayat ' + ayatNumber + '">﴿' + toArabicDigits(ayatNumber) + '﴾</span>';
 }
 
+function stripExistingAyahMarker(text) {
+  return String(text || '')
+    .replace(/(?:[۝۞﴿﴾]\s*)?[٠-٩0-9]+(?:\s*[۝۞﴿﴾])?/gu, ' ')
+    .replace(/[۝۞﴿﴾]/gu, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
 function renderArabicVerse(verse, tajweedVerse, ayatNumber) {
   var text = '';
 
@@ -1324,6 +1332,8 @@ function renderArabicVerse(verse, tajweedVerse, ayatNumber) {
   } else {
     text = escapeHtml(verse && verse.text_uthmani ? verse.text_uthmani : '');
   }
+
+  text = stripExistingAyahMarker(text);
 
   return text + ' ' + getMushafAyahMarker(ayatNumber);
 }
