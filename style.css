@@ -183,9 +183,7 @@ body.day .section-tag,
 body.day .detail-pill,
 body.day .surah-stat,
 body.day .ayat-number{
-  background:rgba(176, 132, 63, 0.08);
   color:#7b5929;
-  border-color:rgba(176, 132, 63, 0.16);
 }
 
 body.day .hero p,
@@ -266,6 +264,20 @@ body.day button:hover{
   background:rgba(176, 132, 63, 0.08);
 }
 
+body.day .icon-btn,
+body.day .icon-btn:hover,
+body.day .icon-btn:focus-visible,
+body.day .share-ayat-btn,
+body.day .share-ayat-btn:hover,
+body.day .bookmark-btn,
+body.day .bookmark-btn:hover,
+body.day .play-btn,
+body.day .play-btn:hover{
+  background:transparent;
+  border-color:transparent;
+  box-shadow:none;
+}
+
 body.day button.primary{
   background:linear-gradient(135deg, #c89d57, #edd6a6);
   color:#2b2115;
@@ -279,12 +291,32 @@ body.day .search-box input{
   background:rgba(255,255,255,0.92);
 }
 
+body.day .search-clear-btn{
+  background:rgba(255,255,255,0.92);
+  color:var(--day-accent);
+  border-color:var(--day-line);
+}
+
+body.day .search-clear-btn:hover{
+  background:rgba(176, 132, 63, 0.08);
+}
+
 body.day .search-box::before{
   border-color:rgba(176, 132, 63, 0.8);
 }
 
 body.day .search-box::after{
   background:rgba(176, 132, 63, 0.8);
+}
+
+body.day .quick-tools-hint{
+  color:var(--day-muted);
+}
+
+body.day kbd{
+  background:rgba(176, 132, 63, 0.08);
+  color:var(--day-accent);
+  border-color:rgba(176, 132, 63, 0.16);
 }
 
 body.day .surah:hover,
@@ -445,7 +477,7 @@ body.day .app-toast{
 
 .search-box input{
   width:100%;
-  padding:18px 22px 18px 58px;
+  padding:18px 56px 18px 58px;
   border:1px solid var(--line);
   border-radius:20px;
   background:rgba(6, 13, 12, 0.72);
@@ -488,6 +520,61 @@ body.day .app-toast{
   border-color:var(--line-strong);
   box-shadow:0 0 0 5px rgba(232, 199, 122, 0.08);
   transform:translateY(-1px);
+}
+
+.search-clear-btn{
+  position:absolute;
+  right:14px;
+  top:50%;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:34px;
+  height:34px;
+  min-height:34px;
+  padding:0;
+  border:1px solid rgba(240, 219, 165, 0.14);
+  border-radius:50%;
+  background:rgba(255,255,255,0.06);
+  color:var(--accent-strong);
+  transform:translateY(-50%);
+}
+
+.search-clear-btn:hover{
+  background:rgba(232, 199, 122, 0.12);
+}
+
+.quick-tools{
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+  margin-top:16px;
+}
+
+.quick-tool-btn{
+  white-space:nowrap;
+}
+
+.quick-tools-hint{
+  margin:12px 0 0;
+  color:var(--muted);
+  font-size:13px;
+  line-height:1.6;
+}
+
+kbd{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-width:24px;
+  height:24px;
+  padding:0 7px;
+  border:1px solid rgba(240, 219, 165, 0.16);
+  border-radius:8px;
+  background:rgba(255,255,255,0.05);
+  color:var(--accent-strong);
+  font:inherit;
+  font-size:12px;
 }
 
 .stack{
@@ -646,6 +733,10 @@ button:focus-visible,
   font-size:13px;
   letter-spacing:0.08em;
   text-transform:uppercase;
+}
+
+body.day .surah-arrow{
+  color:var(--day-accent);
 }
 
 .detail-panel{
@@ -1015,6 +1106,38 @@ button.secondary,
   background:rgba(255,255,255,0.06);
 }
 
+.theme-toggle{
+  width:auto;
+  height:auto;
+  min-width:0;
+  min-height:0;
+  padding:0;
+  border:none;
+  background:transparent;
+  box-shadow:none;
+}
+
+.theme-toggle .icon-btn-icon{
+  width:24px;
+  height:24px;
+}
+
+body .theme-toggle:hover,
+body .theme-toggle:focus-visible{
+  background:transparent;
+  border-color:transparent;
+  box-shadow:none;
+}
+
+body.day .theme-toggle{
+  color:var(--day-accent);
+}
+
+body.day .theme-toggle:hover{
+  background:transparent;
+  border-color:transparent;
+}
+
 button.is-active{
   border-color:var(--line-strong);
   background:rgba(232, 199, 122, 0.16);
@@ -1056,14 +1179,15 @@ button:disabled{
   display:inline-flex;
   align-items:center;
   justify-content:center;
-  min-width:36px;
-  height:36px;
-  padding:0 10px;
-  margin-bottom:16px;
-  border-radius:999px;
-  background:rgba(232, 199, 122, 0.12);
+  min-width:auto;
+  height:auto;
+  padding:0;
+  margin-bottom:14px;
+  border-radius:0;
+  background:transparent;
   color:var(--accent-strong);
-  font-size:13px;
+  font-size:20px;
+  line-height:1;
 }
 
 .arab{
@@ -1086,40 +1210,60 @@ button:disabled{
   font:inherit;
 }
 
+.ayah-mark{
+  display:inline-block;
+  margin-inline-start:10px;
+  color:var(--accent-strong);
+  font-family:"Amiri Quran", "Traditional Arabic", serif;
+  font-size:.8em;
+  line-height:1;
+  white-space:nowrap;
+  vertical-align:middle;
+}
+
 .arab-tajweed tajweed.ham_wasl,
-.arab-tajweed .ham_wasl,
+.arab-tajweed .ham_wasl{color:#c7c7c7;background:transparent;}
+
 .tajweed-chip.ham_wasl{color:#1a1a1a;background:#c7c7c7;}
 
 .arab-tajweed tajweed.slnt,
-.arab-tajweed .slnt,
+.arab-tajweed .slnt{color:#9fb3c8;background:transparent;}
+
 .tajweed-chip.slnt{color:#111;background:#9fb3c8;}
 
 .arab-tajweed tajweed.ghn,
-.arab-tajweed .ghn,
+.arab-tajweed .ghn{color:#f5a524;background:transparent;}
+
 .tajweed-chip.ghn{color:#111;background:#f5a524;}
 
 .arab-tajweed tajweed.idgh_ghn,
-.arab-tajweed .idgh_ghn,
+.arab-tajweed .idgh_ghn{color:#8ad06d;background:transparent;}
+
 .tajweed-chip.idgh_ghn{color:#111;background:#8ad06d;}
 
 .arab-tajweed tajweed.ikhf,
-.arab-tajweed .ikhf,
+.arab-tajweed .ikhf{color:#63c0df;background:transparent;}
+
 .tajweed-chip.ikhf{color:#111;background:#63c0df;}
 
 .arab-tajweed tajweed.iqlb,
-.arab-tajweed .iqlb,
+.arab-tajweed .iqlb{color:#d47474;background:transparent;}
+
 .tajweed-chip.iqlb{color:#111;background:#d47474;}
 
 .arab-tajweed tajweed.idgh_w_ghn,
-.arab-tajweed .idgh_w_ghn,
+.arab-tajweed .idgh_w_ghn{color:#b58cff;background:transparent;}
+
 .tajweed-chip.idgh_w_ghn{color:#111;background:#b58cff;}
 
 .arab-tajweed tajweed.qlq,
-.arab-tajweed .qlq,
+.arab-tajweed .qlq{color:#f28f45;background:transparent;}
+
 .tajweed-chip.qlq{color:#111;background:#f28f45;}
 
 .arab-tajweed tajweed.madda_normal,
-.arab-tajweed .madda_normal,
+.arab-tajweed .madda_normal{color:#68d0ae;background:transparent;}
+
 .tajweed-chip.madda_normal{color:#111;background:#68d0ae;}
 
 .arab-tajweed tajweed.madda_permissible,
@@ -1127,13 +1271,15 @@ button:disabled{
 .arab-tajweed tajweed.madda_necessary,
 .arab-tajweed .madda_necessary,
 .arab-tajweed tajweed.madda_obligatory,
-.arab-tajweed .madda_obligatory,
+.arab-tajweed .madda_obligatory{color:#f0d66f;background:transparent;}
+
 .tajweed-chip.madda_permissible,
 .tajweed-chip.madda_necessary,
 .tajweed-chip.madda_obligatory{color:#111;background:#f0d66f;}
 
 .arab-tajweed tajweed.qalaqah,
-.arab-tajweed .qalaqah,
+.arab-tajweed .qalaqah{color:#f28f45;background:transparent;}
+
 .tajweed-chip.qalaqah{color:#111;background:#f28f45;}
 
 .arti{
@@ -1225,7 +1371,7 @@ button:disabled{
 
 .share-ayat-btn{
   background:transparent;
-  color:var(--accent);
+  color:#fff;
   border:none;
   font-weight:400;
 }
@@ -1440,6 +1586,22 @@ button:disabled{
   .top-buttons button,
   .hero-actions button{
     width:100%;
+  }
+
+  .quick-tools{
+    display:grid;
+    grid-template-columns:repeat(3, minmax(0, 1fr));
+  }
+
+  .quick-tool-btn{
+    width:100%;
+    padding-left:12px;
+    padding-right:12px;
+    font-size:13px;
+  }
+
+  .quick-tools-hint{
+    font-size:12px;
   }
 
   .surah{
